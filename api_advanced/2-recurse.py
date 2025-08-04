@@ -41,5 +41,4 @@ def recurse(subreddit, after="", hot_list=[], page_counter=0):
 
 
 if __name__ == '__main__':
-    print(recurse("zerowastecz"))
-
+    print(recurse("zerowtecz"))
