@@ -1,16 +1,16 @@
 #!/usr/bin/python3
 """Module that recursively counts keyword occurrences in hot Reddit posts."""
 import requests
+import re
 
 
 def count_words(subreddit, word_list, after=None, counts=None):
-    """Recursively count occurrences of keywords in a subreddit's hot post titles."""
+    """Recursively count word occurrences in hot titles of a subreddit."""
     if counts is None:
-        # Normalize word_list: lowercase, handle duplicates
         counts = {}
         for word in word_list:
-            word = word.lower()
-            counts[word] = counts.get(word, 0)
+            word_lower = word.lower()
+            counts[word_lower] = counts.get(word_lower, 0)
 
     url = f"https://www.reddit.com/r/{subreddit}/hot.json"
     headers = {'User-Agent': 'custom-agent'}
@@ -21,11 +21,11 @@ def count_words(subreddit, word_list, after=None, counts=None):
         return
 
     data = response.json().get("data", {})
-    children = data.get("children", [])
-
-    for post in children:
-        title_words = post.get("data", {}).get("title", "").lower().split()
-        for word in title_words:
+    posts = data.get("children", [])
+    for post in posts:
+        title = post.get("data", {}).get("title", "").lower()
+        words = re.findall(r'\b\w+\b', title)
+        for word in words:
             if word in counts:
                 counts[word] += 1
 
@@ -33,9 +33,8 @@ def count_words(subreddit, word_list, after=None, counts=None):
     if after:
         return count_words(subreddit, word_list, after, counts)
 
-    # Filter out 0s
-    filtered = {k: v for k, v in counts.items() if v > 0}
-    sorted_counts = sorted(filtered.items(), key=lambda x: (-x[1], x[0]))
-
-    for word, count in sorted_counts:
+    # Prepare and print sorted results
+    result = [(word, count) for word, count in counts.items() if count > 0]
+    result.sort(key=lambda x: (-x[1], x[0]))
+    for word, count in result:
         print(f"{word}: {count}")
